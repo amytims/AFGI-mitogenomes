@@ -11,7 +11,8 @@ import os
 import urllib.request
 
 # 1. Read the text from your local file
-# Replace 'sequences.txt' with the actual path to your file
+
+# to do programattically - external option?
 file_path = "test_reads/NC_023807.1.fa"
 base_name = os.path.splitext(os.path.basename(file_path))[0]
 print(base_name)
@@ -24,10 +25,12 @@ if not os.path.exists(file_path):
 with open(file_path, "r", encoding="utf-8") as file:
     fasta_data = file.read()
 
+
+# specify externally
 download_dir = os.path.expanduser(f"~/Downloads/{base_name}")
 
+# make directory if needed
 os.makedirs(download_dir, exist_ok=True)
-
 
 # Create Chrome Options
 options = Options()
@@ -35,11 +38,8 @@ prefs = {
     "download.default_directory": download_dir,  # Set your preferred download folder path
     "download.prompt_for_download": False,  # Disable popup prompts
     "download.directory_upgrade": True,
-    # "plugins.always_open_pdf_externally": True,  # <-- The Magic Key: Forces immediate download instead of embedding
 }
 options.add_experimental_option("prefs", prefs)
-# options.add_argument("--start-maximized")
-# options.add_argument("--auto-open-devtools-for-tabs")
 
 # 1. Initialize the Chrome browser
 driver = webdriver.Chrome(
@@ -48,24 +48,25 @@ driver = webdriver.Chrome(
 
 try:
     # 2. Open the target webpage
-    url = "https://mitofish.aori.u-tokyo.ac.jp/annotation/input"  # Replace with your target URL
+    url = "https://mitofish.aori.u-tokyo.ac.jp/annotation/input" 
     driver.get(url)
 
-    time.sleep(5)
+    #wait a sec so mitofish doesn't freak out
+    time.sleep(3)
 
-    # Wait for the text box to be present (adjust locator: ID, NAME, XPATH, etc.)
+    # Wait for the text box to be present in case it takes longer to load
     wait = WebDriverWait(driver, 10)
     text_box = wait.until(
         EC.presence_of_element_located((By.CSS_SELECTOR, "textarea[data-v-4267c46e]"))
     )
 
-    # time.sleep(5)
+
     # 3. Paste or send text into the box
     text_to_paste = fasta_data
     text_box.clear()  # Clears existing text if needed
     text_box.send_keys(text_to_paste)
     print("data pasted into text box")
-    # time.sleep(10)
+
 
     # 4. Find the Annotate! button and click it
     submit_button = wait.until(
@@ -73,7 +74,7 @@ try:
     )
 
     submit_button.click()
-    print("Annotate button clicked successfully?")
+    print("Annotate button clicked successfully")
 
     # TRYING TO CLICK WITH JAVASCRIPT CAUSES AN ERROR
     # HAVE TO DO IT WITH CLICK()
@@ -101,38 +102,36 @@ try:
 
     print("Switched focus to new window")
 
-    # 7. Wait for the download link to appear on the new results page
+    # 7. Wait for the tar.gz download link to appear on the new results page
     download_wait = WebDriverWait(driver, 60)
     download_link = download_wait.until(
-        EC.presence_of_element_located((By.XPATH, '//a[contains(@href, ".mitoannotator.tar.gz")]'))
+        EC.presence_of_element_located(
+            (By.XPATH, '//a[contains(@href, ".mitoannotator.tar.gz")]')
+        )
     )
-    
-    # 3. Extract the direct download URL from the 'href' attribute
+
+    # Extract the direct download URL from the 'href' attribute
     targz_url = download_link.get_attribute("href")
     print(f"Found archive URL: {targz_url}")
-    
-    targz_filename = (f"{base_name}.tar.gz")
+
+    # download and rename tar.gz file to match input file name
+    targz_filename = f"{base_name}.tar.gz"
     urllib.request.urlretrieve(targz_url, Path(download_dir, targz_filename))
     print(f"Successfully downloaded to {Path(download_dir, targz_filename)}")
 
 
-
-    # driver.execute_script("arguments[0].click();", download_link)
-    # print(".tar.gz Download triggered successfully with JavaScript!")
-
     # 8. wait for pdf to load in; click download button
-    # Adjust the timeout (10 seconds) if the page loads slowly
     pdf_element = WebDriverWait(driver, 30).until(
         EC.presence_of_element_located((By.XPATH, '//embed[contains(@src, "seq.pdf")]'))
     )
     print("embedded pdf element located")
 
-    # 3. Extract the PDF URL from the 'src' attribute
+    # Extract the PDF URL from the 'src' attribute
     pdf_url = pdf_element.get_attribute("src")
     print(f"Found PDF URL: {pdf_url}")
 
-    # 4. Download the PDF file using urllib
-    pdf_filename = (f"{base_name}_plot.pdf")
+    # Download the PDF file using urllib
+    pdf_filename = f"{base_name}_plot.pdf"
     urllib.request.urlretrieve(pdf_url, Path(download_dir, pdf_filename))
     print(f"Successfully downloaded to {Path(download_dir, pdf_filename)}")
 
