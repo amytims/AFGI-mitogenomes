@@ -1,6 +1,5 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -9,49 +8,84 @@ from pathlib import Path
 import time
 import os
 import urllib.request
+import argparse
+import gzip
 
-# 1. Read the text from your local file
+parser = argparse.ArgumentParser(description="Process a target file.")
 
-# to do programattically - external option?
-file_path = "test_reads/NC_023807.1.fa"
-base_name = os.path.splitext(os.path.basename(file_path))[0]
-print(base_name)
+# Parse external options
+parser.add_argument(
+    "-f", "--fasta", help="path to input fasta file", required=True, type=str
+)
+parser.add_argument(
+    "-d",
+    "--download_dir",
+    help="path to download parent directory. Files will be saved in download_dir/fasta/",
+    type=str,
+    default="~/Downloads",
+)
 
+args = parser.parse_args()
+
+# parse fasta file path
+file_path = Path(args.fasta)
+
+# error if file doesn't exist
 if not os.path.exists(file_path):
     raise FileNotFoundError(
         f"Could not find the file at {file_path}. Please check the path."
     )
 
-with open(file_path, "r", encoding="utf-8") as file:
-    fasta_data = file.read()
+
+# if it's a compressed file, open with gzip open
+if file_path.suffix.lower() in [".gz"]:
+    # make sure it's either.fa.gz or .fasta.gz - throw error if not
+    if not file_path.with_suffix("").suffix.lower() in [".fa", ".fasta"]:
+        raise TypeError(
+            "File does not have .fa or .fasta extension - check it's a valid fasta file"
+        )
+
+    with gzip.open(file_path, "rt", encoding="utf-8") as file:
+        fasta_data = file.read()
+# if it's not compressed, make sure it's a .fa or .fasta file and then open
+else:
+    if not file_path.suffix.lower() in [".fa", ".fasta"]:
+        raise TypeError(
+            "File does not have .fa or .fasta extension - check it's a valid fasta file"
+        )
+
+    with open(file_path, "r", encoding="utf-8") as file:
+        fasta_data = file.read()
 
 
-# specify externally
-download_dir = os.path.expanduser(f"~/Downloads/{base_name}")
+print(f"Processing fasta file at {file_path}")
 
-# make directory if needed
-os.makedirs(download_dir, exist_ok=True)
+# get file name without extensions
+base_name = (
+    os.path.basename(file_path)
+    .removesuffix(".gz")
+    .removesuffix(".fasta")
+    .removesuffix(".fa")
+)
+download_dir = os.path.expanduser(f"{args.download_dir}/{base_name}")
 
-# Create Chrome Options
-options = Options()
-prefs = {
-    "download.default_directory": download_dir,  # Set your preferred download folder path
-    "download.prompt_for_download": False,  # Disable popup prompts
-    "download.directory_upgrade": True,
-}
-options.add_experimental_option("prefs", prefs)
+# make directory; throw error if it already exists - make sure to not overwrite existing files
+os.makedirs(download_dir, exist_ok=False)
 
-# 1. Initialize the Chrome browser
+print(f"Files will be saved in {download_dir}/")
+
+
+# Initialize the Chrome browser
 driver = webdriver.Chrome(
-    service=Service(ChromeDriverManager().install()), options=options
+    service=Service(ChromeDriverManager().install())
 )
 
 try:
-    # 2. Open the target webpage
-    url = "https://mitofish.aori.u-tokyo.ac.jp/annotation/input" 
+    # Open the mitoannotator webpage
+    url = "https://mitofish.aori.u-tokyo.ac.jp/annotation/input"
     driver.get(url)
 
-    #wait a sec so mitofish doesn't freak out
+    # wait a sec so it doesn't freak out
     time.sleep(3)
 
     # Wait for the text box to be present in case it takes longer to load
@@ -60,12 +94,11 @@ try:
         EC.presence_of_element_located((By.CSS_SELECTOR, "textarea[data-v-4267c46e]"))
     )
 
-
-    # 3. Paste or send text into the box
+    # paste fasta data into the text box
     text_to_paste = fasta_data
     text_box.clear()  # Clears existing text if needed
     text_box.send_keys(text_to_paste)
-    print("data pasted into text box")
+    print("Fasta data pasted into text box")
 
 
     # 4. Find the Annotate! button and click it
@@ -74,7 +107,8 @@ try:
     )
 
     submit_button.click()
-    print("Annotate button clicked successfully")
+    print("'Annotate!' button clicked successfully")
+
 
     # TRYING TO CLICK WITH JAVASCRIPT CAUSES AN ERROR
     # HAVE TO DO IT WITH CLICK()
@@ -93,7 +127,7 @@ try:
     )
 
     driver.execute_script("arguments[0].click();", view_results_button)
-    print("View Results button clicked via JavaScript successfully!")
+    print("'View Results' button clicked via JavaScript successfully!")
 
     # 6. Switch Selenium's focus to the newly opened tab
     # 'window_handles[-1]' always represents the most recently opened tab
@@ -117,14 +151,12 @@ try:
     # download and rename tar.gz file to match input file name
     targz_filename = f"{base_name}.tar.gz"
     urllib.request.urlretrieve(targz_url, Path(download_dir, targz_filename))
-    print(f"Successfully downloaded to {Path(download_dir, targz_filename)}")
-
+    print(f"Successfully downloaded .tar.gz to {Path(download_dir, targz_filename)}")
 
     # 8. wait for pdf to load in; click download button
     pdf_element = WebDriverWait(driver, 30).until(
         EC.presence_of_element_located((By.XPATH, '//embed[contains(@src, "seq.pdf")]'))
     )
-    print("embedded pdf element located")
 
     # Extract the PDF URL from the 'src' attribute
     pdf_url = pdf_element.get_attribute("src")
@@ -133,9 +165,10 @@ try:
     # Download the PDF file using urllib
     pdf_filename = f"{base_name}_plot.pdf"
     urllib.request.urlretrieve(pdf_url, Path(download_dir, pdf_filename))
-    print(f"Successfully downloaded to {Path(download_dir, pdf_filename)}")
+    print(f"Successfully downloaded .pdf to {Path(download_dir, pdf_filename)}")
 
-    print("successfully annotated mitogenome and downloaded files")
+    print("Successfully annotated mitogenome and downloaded files. Exiting browser window")
+    time.sleep(3)
 
 finally:
     # Close the browser
