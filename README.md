@@ -33,7 +33,7 @@ done
 ```
 usage: mitoannotator.py [-h] -f FASTA [-d DOWNLOAD_DIR]
 
-Process a target file.
+Run a target fasta (compressed or uncompressed) through the MitoAnnotator process on MitoFish
 
 options:
   -h, --help            show this help message and exit

@@ -11,7 +11,7 @@ import urllib.request
 import argparse
 import gzip
 
-parser = argparse.ArgumentParser(description="Process a target file.")
+parser = argparse.ArgumentParser(description="Run a target fasta (compressed or uncompressed) through the MitoAnnotator process on MitoFish")
 
 # Parse external options
 parser.add_argument(
