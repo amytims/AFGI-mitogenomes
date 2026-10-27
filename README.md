@@ -8,6 +8,8 @@ Scripts for assembling and annotating mitogenomes from AFGI short-read datasets
 
 ## mitoannotator.py
 
+[MitoFish](https://mitofish.aori.u-tokyo.ac.jp/) is a great resource, offering fish-specific mitogenome annotation through its [MitoAnnotator](https://mitofish.aori.u-tokyo.ac.jp/annotation/input) interface. However, it can only [be accessed via web interface](https://pmc.ncbi.nlm.nih.gov/articles/PMC3808866/), which slows down researchers who have a backlog of many fishy mitogenomes to annotate and upload to NCBI. This script automates the process of accessing the web interface and downloading the annotation files, making it possible to iterate over multiple mitogenomes without having to manually copy-paste everything.
+
 >[!WARNING]
 >Trying to click the 'Annotate!' button with JavaScript seems to cause an error on the webpage so we're doing a regular click - this means the button and the window need to be visible. Don't minimise the window or it'll break :(
 
