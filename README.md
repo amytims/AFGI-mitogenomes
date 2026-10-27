@@ -2,9 +2,20 @@
 
 Scripts for assembling and annotating mitogenomes from AFGI short-read datasets
 
-1. get_organelle.sh - test run of the getOrganelle program
-2. megahit.sh - test run of the MEGAHIT assembly program
-3. mitoannotator.py - script for automating mitogenome annotation using the MitoFish web interface
+1. bpa_parallel_downloads.sh - downloads multiple files off BPA data portal in parallel
+2. get_organelle.sh - test run of the getOrganelle program
+3. megahit.sh - test run of the MEGAHIT assembly program
+4. mitoannotator.py - script for automating mitogenome annotation using the MitoFish web interface
+
+## bpa_parallel_downloads.sh
+
+The default script you get when you put multiple files into your BPA data portal cart downloads files one at a time, which is time-consuming if you're downloading a huge number of pop-gen files. This script speeds up the process by running the downloads in batches. The function takes three inputs: a url file (found in /tmp/...urls.txt in the .gz file you get from BPA), an md5sum file (/tmp/...md5sum.txt), and a file path to the directory where you want your downloads to go. 
+
+### Usage
+
+```bash
+sbatch bpa_parallel_downloads.sh urls.txt md5sum.txt /path/to/download/dir
+```
 
 ## mitoannotator.py
 
