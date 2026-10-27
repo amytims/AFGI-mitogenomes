@@ -8,6 +8,9 @@ Scripts for assembling and annotating mitogenomes from AFGI short-read datasets
 
 ## mitoannotator.py
 
+[WARNING!]
+Trying to click the 'Annotate!' button with JavaScript seems to cause an error on the webpage so we're doing a regular click - this means the button and the window need to be visible. Don't minimise the window or it'll break :(
+
 Set up python venv and install requirements with:
 
 ```
