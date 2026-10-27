@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+
+# 1. parse fasta file - check its extension and open file
+# 2. parse and create download directory
+# 3. open browser, paste in fasta file, click annotate button
+# 4. view results in new tab
+# 5. download .tar.gz and .pdf files
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -47,6 +55,7 @@ if file_path.suffix.lower() in [".gz"]:
 
     with gzip.open(file_path, "rt", encoding="utf-8") as file:
         fasta_data = file.read()
+        
 # if it's not compressed, make sure it's a .fa or .fasta file and then open
 else:
     if not file_path.suffix.lower() in [".fa", ".fasta"]:
@@ -89,8 +98,8 @@ try:
     time.sleep(3)
 
     # Wait for the text box to be present in case it takes longer to load
-    wait = WebDriverWait(driver, 10)
-    text_box = wait.until(
+    textbox_wait = WebDriverWait(driver, 10)
+    text_box = textbox_wait.until(
         EC.presence_of_element_located((By.CSS_SELECTOR, "textarea[data-v-4267c46e]"))
     )
 
@@ -101,8 +110,11 @@ try:
     print("Fasta data pasted into text box")
 
 
-    # 4. Find the Annotate! button and click it
-    submit_button = wait.until(
+    # Find the Annotate! button and click it
+    # TRYING TO CLICK WITH JAVASCRIPT CAUSES AN ERROR
+    # HAVE TO DO IT WITH CLICK()
+    submit_button_wait = WebDriverWait(driver, 30)
+    submit_button = submit_button_wait.until(
         EC.element_to_be_clickable((By.CSS_SELECTOR, "button.btn-success"))
     )
 
@@ -110,15 +122,7 @@ try:
     print("'Annotate!' button clicked successfully")
 
 
-    # TRYING TO CLICK WITH JAVASCRIPT CAUSES AN ERROR
-    # HAVE TO DO IT WITH CLICK()
-    # submit_button = wait.until(
-    #     EC.presence_of_element_located((By.CSS_SELECTOR, "button.btn-success"))
-    # )
-    # driver.execute_script("arguments[0].click();", submit_button)
-    # print("Annotate button clicked via JavaScript")
-
-    # 5. Wait for results to load and click "view results" button
+    # Wait for results to load and click "view results" button
     processing_wait = WebDriverWait(driver, 60)
     view_results_button = processing_wait.until(
         EC.presence_of_element_located(
@@ -127,16 +131,16 @@ try:
     )
 
     driver.execute_script("arguments[0].click();", view_results_button)
-    print("'View Results' button clicked via JavaScript successfully!")
+    print("'View Results' button successfully clicked using JavaScript")
 
-    # 6. Switch Selenium's focus to the newly opened tab
-    # 'window_handles[-1]' always represents the most recently opened tab
-    wait.until(lambda d: len(d.window_handles) > 1)  # Wait for tab to open
+    # Switch Selenium's focus to the newly opened tab
+    window_wait = WebDriverWait(driver, 30)
+    window_wait.until(lambda d: len(d.window_handles) > 1)  # Wait for tab to open
     driver.switch_to.window(driver.window_handles[-1])
 
-    print("Switched focus to new window")
+    print("Switched browser focus to results tab")
 
-    # 7. Wait for the tar.gz download link to appear on the new results page
+    # Wait for the tar.gz download link to appear on the new results page
     download_wait = WebDriverWait(driver, 60)
     download_link = download_wait.until(
         EC.presence_of_element_located(
@@ -153,8 +157,9 @@ try:
     urllib.request.urlretrieve(targz_url, Path(download_dir, targz_filename))
     print(f"Successfully downloaded .tar.gz to {Path(download_dir, targz_filename)}")
 
-    # 8. wait for pdf to load in; click download button
-    pdf_element = WebDriverWait(driver, 30).until(
+    # Wait for pdf to load in; click download button
+    pdf_wait = WebDriverWait(driver, 30)
+    pdf_element = pdf_wait.until(
         EC.presence_of_element_located((By.XPATH, '//embed[contains(@src, "seq.pdf")]'))
     )
 
@@ -167,7 +172,7 @@ try:
     urllib.request.urlretrieve(pdf_url, Path(download_dir, pdf_filename))
     print(f"Successfully downloaded .pdf to {Path(download_dir, pdf_filename)}")
 
-    print("Successfully annotated mitogenome and downloaded files. Exiting browser window")
+    print("Successfully annotated mitogenome and downloaded files. \nExiting browser window.")
     time.sleep(3)
 
 finally:
