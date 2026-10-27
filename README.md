@@ -23,7 +23,7 @@ Run the script over all mitogenome assemblies in a directory with:
 
 ```bash
 for file in mt_dir/*; do 
-    echo $file
+    echo "Running loop on $file"
     python3 mitoannotator.py -f $file
 done
 ```
