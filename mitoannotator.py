@@ -104,9 +104,8 @@ try:
     )
 
     # paste fasta data into the text box
-    text_to_paste = fasta_data
     text_box.clear()  # Clears existing text if needed
-    text_box.send_keys(text_to_paste)
+    text_box.send_keys(fasta_data)
     print("Fasta data pasted into text box")
 
 
