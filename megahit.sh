@@ -40,7 +40,8 @@ megahit \
   --presets meta-sensitive \
   --min-contig-len 500 \
   -t 96 \
-  -o "megahit/$(basename --suffix=.fastq.gz $RAW_R1)_megahit"
+  -o "megahit/$(basename --suffix=.fastq.gz $RAW_R1)_megahit" \
+  --continue
 
 
 duration=$SECONDS
