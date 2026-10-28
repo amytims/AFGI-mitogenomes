@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH --job-name=megahit.sh
-#SBATCH --time=6:00:00
-#SBATCH --cpus-per-task=48
+#SBATCH --job-name=megahit_long_highmem.sh
+#SBATCH --time=12:00:00
+#SBATCH --cpus-per-task=96
 #SBATCH --ntasks=1
-#SBATCH --mem=72g
-#SBATCH --array=1-375%50
+#SBATCH --mem=144g
+#SBATCH --array=21,30,35,82
 #SBATCH --out=afgi-mitogenomes/logs/megahit%A-%a.out
 
 SECONDS=0
