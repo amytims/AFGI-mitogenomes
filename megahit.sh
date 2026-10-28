@@ -29,7 +29,7 @@ singularity exec docker://quay.io/biocontainers/fastp:1.4.0--h43da1c4_0 \
     --out2 "${TRIM_DIR}/fastp/$(basename --suffix=.fastq.gz $RAW_R2).fastp.fastq.gz" \
     --trim_poly_g \
     --dedup \
-    --thread 48 \
+    --thread 96 \
     --html "${TRIM_DIR}/fastp/$(basename --suffix=.fastq.gz $RAW_R1)_fastp_report.html" \
     --json "${TRIM_DIR}/fastp/$(basename --suffix=.fastq.gz $RAW_R1)_fastp_report.json"
 
@@ -39,7 +39,7 @@ megahit \
   -2 "${TRIM_DIR}/fastp/$(basename --suffix=.fastq.gz $RAW_R2).fastp.fastq.gz" \
   --presets meta-sensitive \
   --min-contig-len 500 \
-  -t 48 \
+  -t 96 \
   -o "megahit/$(basename --suffix=.fastq.gz $RAW_R1)_megahit"
 
 
